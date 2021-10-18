@@ -44,7 +44,7 @@ public class Stock {
 		return stockInstance;
 	}
 
-	public JSONObject getStockList() throws FileOperationsException {
+	public synchronized JSONObject getStockList() throws FileOperationsException {
 		File stockFile = null;
 		try {
 			stockFile = new File(RobotFactoryConstants.STOCK_FILE_LOCATION);

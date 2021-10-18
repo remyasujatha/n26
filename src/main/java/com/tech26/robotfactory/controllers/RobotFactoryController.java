@@ -61,21 +61,21 @@ public class RobotFactoryController {
 		return null;
 	}
 
-	@PostMapping("/orders")
-	@ResponseStatus(HttpStatus.CREATED)
-	public String purchaseRobot(final HttpServletResponse response, @RequestBody String order)
-			throws IOException {
-		String orderMessage = null;
-		try {
-			orderMessage = robertFactory.purchase(order);
-		} catch (PurchaseOrderException e) {
-			response.sendError(e.getCode(), e.getMessage());
-		} catch (InvalidOrderExcception e) {
-			response.sendError(e.getCode(), e.getMessage());
-		}
-		return orderMessage;
-
-	}
+//	@PostMapping("/orders")
+//	@ResponseStatus(HttpStatus.CREATED)
+//	public String purchaseRobot(final HttpServletResponse response, @RequestBody String order)
+//			throws IOException {
+//		String orderMessage = null;
+//		try {
+//			orderMessage = robertFactory.purchase(order);
+//		} catch (PurchaseOrderException e) {
+//			response.sendError(e.getCode(), e.getMessage());
+//		} catch (InvalidOrderExcception e) {
+//			response.sendError(e.getCode(), e.getMessage());
+//		}
+//		return orderMessage;
+//
+//	}
 
 	public static boolean isEnoughStock(Order order) {
 
