@@ -4,6 +4,10 @@ import java.io.IOException;
 
 import org.springframework.http.HttpStatus;
 
+/**
+ * @author Remya
+ *
+ */
 public class FileOperationsException extends IOException{
 
 	/**

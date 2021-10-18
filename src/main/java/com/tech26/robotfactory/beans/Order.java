@@ -17,7 +17,10 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 
 import com.tech26.robotfactory.Exceptions.FileOperationsException;
@@ -25,11 +28,25 @@ import com.tech26.robotfactory.utils.RobotFactoryConstants;
 import com.tech26.robotfactory.utils.RobotFactoryErrorCodes;
 import com.tech26.robotfactory.utils.RobotFactoryExceptionHandler;
 
+/**
+ * @author Remya 
+ * 
+ * Order entity storing order details
+ *
+ */
+@Component
 public class Order {
 
 	private JSONArray components;
 	private long orderID;
 	private double total;
+
+	private static String orderFileLocation;
+
+	@Autowired
+	public Order(@Value("${path.order.fileName}") String orderFileLocation) {
+		this.orderFileLocation = orderFileLocation;
+	}
 
 	/**
 	 * @return the orderID
@@ -66,6 +83,10 @@ public class Order {
 		return components;
 	}
 
+	public static Order getInstance() {
+		return new Order(orderFileLocation);
+	}
+
 	/**
 	 * @param order the order to set
 	 */
@@ -73,11 +94,15 @@ public class Order {
 		this.components = components;
 	}
 
+	/**
+	 * @return already places orders
+	 * @throws FileOperationsException
+	 */
 	public JSONObject getSuccessOrderList() throws FileOperationsException {
 		JSONObject successfullOrders = new JSONObject();
 		File ordersFile = null;
 		try {
-			ordersFile = new File(RobotFactoryConstants.ORDER_FILE_LOCATION);
+			ordersFile = new File(orderFileLocation);
 			if (ordersFile.exists()) {
 				JSONParser parser = new JSONParser();
 				successfullOrders = (JSONObject) parser.parse(new FileReader(ordersFile));
@@ -95,62 +120,21 @@ public class Order {
 			throw new FileOperationsException(HttpStatus.INTERNAL_SERVER_ERROR.value(), errorMessage);
 		}
 	}
-//
-//	public JSONArray getSortedOrderList(JSONArray orders) {
-//		return getSortedOrderList(orders, "asc");
-//
-//	}
-//
-//	public JSONArray getSortedOrderList(JSONArray orders, String orderBy) {
-////		List<JSONObject> orderList = (ArrayList<JSONObject>) orders.stream().collect(Collectors.toList());
-////		Collections.sort(orderList, new Comparator<JSONObject>() {
-////
-////			@Override
-////			public int compare(JSONObject order1, JSONObject order2) {
-////				if (orderBy.equalsIgnoreCase("desc")) {
-////					return (int) ((long) order2.get(RobotFactoryConstants.JSON_KEY_ORDER_ID)
-////							- (long) order1.get(RobotFactoryConstants.JSON_KEY_ORDER_ID));
-////				} else {
-////					return (int) ((long) order1.get(RobotFactoryConstants.JSON_KEY_ORDER_ID)
-////							- (long) order2.get(RobotFactoryConstants.JSON_KEY_ORDER_ID));
-////				}
-////			}
-////
-////		});
-////		orderList.stream().map((item)=> )
-////		return (JSONArray) orderList;
-//		
-//		orders.stream().sorted( new Comparator<JSONObject>() {
-//
-//			@Override
-//			public int compare(JSONObject order1, JSONObject order2) {
-//				if (orderBy.equalsIgnoreCase("desc")) {
-//					return (int) ((long) order2.get(RobotFactoryConstants.JSON_KEY_ORDER_ID)
-//							- (long) order1.get(RobotFactoryConstants.JSON_KEY_ORDER_ID));
-//				} else {
-//					return (int) ((long) order1.get(RobotFactoryConstants.JSON_KEY_ORDER_ID)
-//							- (long) order2.get(RobotFactoryConstants.JSON_KEY_ORDER_ID));
-//				}
-//			}
-//		});
-//		
-////		orders.stream().sorted(Comparator.comparing((item)-> {
-////			 ((long)(JSONObject)(item)).get(RobotFactoryConstants.JSON_KEY_ORDER_ID), Comparator.re
-////		}))
-//		return orders;
-//	}
-	
+
 	public long getMaxOrderId(JSONArray orders) {
 		long maxValue = 0;
 		for (Object object : orders) {
-			JSONObject item = (JSONObject)object;
+			JSONObject item = (JSONObject) object;
 			long orderId = (long) item.get(RobotFactoryConstants.JSON_KEY_ORDER_ID);
-			if(orderId > maxValue) {
+			if (orderId > maxValue) {
 				maxValue = orderId;
 			}
 		}
 		return maxValue;
-		
+
 	}
 
+	public static String getOrderFileLocation() {
+		return orderFileLocation;
+	}
 }

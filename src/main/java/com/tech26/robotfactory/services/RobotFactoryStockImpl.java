@@ -8,6 +8,10 @@ import com.tech26.robotfactory.beans.Stock;
 import com.tech26.robotfactory.utils.RobotFactoryConstants;
 import com.tech26.robotfactory.utils.RobotFactoryUtils;
 
+/**
+ * @author Remya
+ *
+ */
 public class RobotFactoryStockImpl implements RobotFactoryStockService{
 	
 	public static RobotFactoryStockImpl robotFactoryStock;

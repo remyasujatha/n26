@@ -17,6 +17,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.springframework.util.ResourceUtils;
 
+/**
+ * @author Remya
+ * 
+ * Class providing utility functions for the application
+ *
+ */
 public class RobotFactoryUtils {
 
 	public static synchronized  boolean writeToFile(String fileName, String content) {

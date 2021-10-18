@@ -21,6 +21,12 @@ import com.tech26.robotfactory.Exceptions.PurchaseOrderException;
 import com.tech26.robotfactory.services.RobotFactoryOrderImpl;
 import com.tech26.robotfactory.services.RobotFactoryStockImpl;
 
+/**
+ * @author Remya
+ * 
+ * Controller for handling Orders
+ *
+ */
 @RestController
 public class RobotFactoryStockController {
 	

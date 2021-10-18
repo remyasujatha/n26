@@ -1,6 +1,11 @@
 
 package com.tech26.robotfactory.utils;
 
+/**
+ * @author Remya
+ * Error codes used in application
+ *
+ */
 public enum RobotFactoryErrorCodes {
 	
 	NO_ORDER_MATCHING_ORDER_ID(4000),

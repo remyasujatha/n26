@@ -33,6 +33,12 @@ import com.tech26.robotfactory.beans.Stock;
 import com.tech26.robotfactory.services.RobotFactoryOrderService;
 import com.tech26.robotfactory.services.RobotFactoryOrderImpl;
 
+/**
+ * @author Remya
+ * 
+ * Controller for handling stocks
+ *
+ */
 @RestController
 public class RobotFactoryOrderController {
 

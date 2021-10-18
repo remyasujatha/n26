@@ -5,6 +5,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 
+
+/**
+ * @author remya
+ * 
+ * Application to Order configurable Robots
+ */
 @SpringBootApplication
 public class RobotFatoryServicesApplication extends SpringBootServletInitializer{
 

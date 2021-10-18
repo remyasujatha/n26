@@ -17,9 +17,11 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
 
 import com.tech26.robotfactory.Exceptions.FileOperationsException;
@@ -27,27 +29,40 @@ import com.tech26.robotfactory.utils.RobotFactoryConstants;
 import com.tech26.robotfactory.utils.RobotFactoryErrorCodes;
 import com.tech26.robotfactory.utils.RobotFactoryExceptionHandler;
 
+/**
+ * @author Remya
+ *
+ * Stock entity to store Stock details
+ */
+@Component
 public class Stock {
 
 	private static Stock stockInstance;
+	private static String stockFileLocation;
 
-	private Stock() {
+	
+	@Autowired
+	private Stock(@Value("${path.stock.fileName}") String stockFileLocation) {
+		this.stockFileLocation = stockFileLocation;
 	}
 
 	public static Stock getInstance() {
 
 		if (stockInstance == null) {
 			synchronized (Stock.class) {
-				stockInstance = new Stock();
+				stockInstance = new Stock(stockFileLocation);
 			}
 		}
 		return stockInstance;
 	}
-
+	
+	/**
+	 * Returns current stock list 
+	 * */
 	public synchronized JSONObject getStockList() throws FileOperationsException {
 		File stockFile = null;
 		try {
-			stockFile = new File(RobotFactoryConstants.STOCK_FILE_LOCATION);
+			stockFile = new File(stockFileLocation);
 			if (!stockFile.exists()) {
 				File initialStockFile = ResourceUtils.getFile(RobotFactoryConstants.INITIAL_STOCK_FILE_LOCATION);
 				try (OutputStream os = Files.newOutputStream(stockFile.toPath())) {
@@ -112,5 +127,7 @@ public class Stock {
 
 		return stockItemsMap;
 	}
+
+
 
 }

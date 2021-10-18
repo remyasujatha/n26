@@ -1,22 +1,15 @@
 package com.tech26.robotfactory.services;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.catalina.User;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 
 import com.tech26.robotfactory.Exceptions.FileOperationsException;
@@ -33,10 +26,13 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 	public static RobotFactoryOrderImpl robotFactoryOrder;
 	public static RobotFactoryStockImpl robotFactoryStock;
 	public static Stock currentStock;
-
+	public static Order userOrder;
+	
 	private RobotFactoryOrderImpl() {
 		currentStock = Stock.getInstance();
 		robotFactoryStock = RobotFactoryStockImpl.getInstance();
+		
+		userOrder = Order.getInstance();
 	}
 
 	public static RobotFactoryOrderImpl getInstance() {
@@ -48,21 +44,19 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 		return robotFactoryOrder;
 	}
 
-	
-
 	@Override
-	public boolean isValidOrder(Order order) throws PurchaseOrderException, FileOperationsException {
-		return validateOrder(order);
+	public boolean isValidOrder(String order)
+			throws PurchaseOrderException, FileOperationsException, InvalidOrderExcception {
+		JSONArray orderItems = getOrderItems(order);
+		userOrder.setComponents(orderItems);
+		return isOrderPlacable(userOrder);
 	}
 
-	@Override
-	public String purchase(String order)
-			throws PurchaseOrderException, FileOperationsException, InvalidOrderExcception {
-
+	private JSONArray getOrderItems(String order) throws InvalidOrderExcception {
 		JSONParser parser = new JSONParser();
-		Order userOrder;
+		Object orderObj;
 		try {
-			Object orderObj = parser.parse(order);
+			orderObj = parser.parse(order);
 			if (orderObj == null) {
 				String errorMessage = RobotFactoryExceptionHandler.getMessage(RobotFactoryErrorCodes.NULL_ORDER_PAYLOD,
 						"Invalid payload!. Sample payload is"
@@ -70,54 +64,45 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 				throw new InvalidOrderExcception(HttpStatus.BAD_REQUEST.value(), errorMessage);
 
 			}
-			JSONObject jsonObject = (JSONObject) orderObj;
-			if (!jsonObject.containsKey(RobotFactoryConstants.JSON_KEY_COMPONENTS)) {
-				String errorMessage = RobotFactoryExceptionHandler
-						.getMessage(RobotFactoryErrorCodes.INVALID_ORDER_PAYLOAD, "Invalid payload!. Sample payload is "
-								+ RobotFactoryConstants.getSampleOrderPayload().toString());
-				throw new InvalidOrderExcception(HttpStatus.BAD_REQUEST.value(), errorMessage);
-
-			}
-			Object componentsObject = jsonObject.get(RobotFactoryConstants.JSON_KEY_COMPONENTS);
-			if (!(componentsObject instanceof JSONArray)) {
-				String errorMessage = RobotFactoryExceptionHandler.getMessage(
-						RobotFactoryErrorCodes.INVALID_ORDER_COMPONENTS_ARRAY,
-						"Invalid payload!. \"components\" should be array. Sample payload is "
-								+ RobotFactoryConstants.getSampleOrderPayload().toString());
-				throw new InvalidOrderExcception(HttpStatus.BAD_REQUEST.value(), errorMessage);
-			}
-
-			JSONArray orderArray = (JSONArray) jsonObject.get(RobotFactoryConstants.JSON_KEY_COMPONENTS);
-			userOrder = new Order();
-			userOrder.setComponents(orderArray);
 		} catch (ParseException e) {
 			String errorMessage = RobotFactoryExceptionHandler.getMessage(RobotFactoryErrorCodes.INVALID_ORDER_PAYLOAD,
 					e + "");
 			throw new InvalidOrderExcception(HttpStatus.BAD_REQUEST.value(), errorMessage);
-		}
-		boolean isOrderValid = isValidOrder(userOrder);
-		if (isOrderValid) {
-			double totalAmount = caculateOrderAmount(userOrder);
-			JSONObject responseObject = new JSONObject();
-			long orderID;
-			JSONObject successfullOrders = userOrder.getSuccessOrderList();
-			JSONArray savedOrders = new JSONArray();
-			long lastOrderId = RobotFactoryConstants.FIRST_ORDER_ID;
-			if (successfullOrders.containsKey(RobotFactoryConstants.JSON_KEY_ITEMS)) {
-				savedOrders = (JSONArray) successfullOrders.get(RobotFactoryConstants.JSON_KEY_ITEMS);
-				lastOrderId = userOrder.getMaxOrderId(savedOrders);
-			}
-			responseObject.put(RobotFactoryConstants.JSON_KEY_ORDER_ID, ++lastOrderId);
-			responseObject.put(RobotFactoryConstants.JSON_KEY_TOTAL, Math.round(totalAmount * 100) / 100.0d);
-			savedOrders.add(responseObject);
-			successfullOrders.put(RobotFactoryConstants.JSON_KEY_ITEMS, savedOrders);
-			boolean isStockUpdated = robotFactoryStock.updateStock(userOrder.getComponents());
-			if (isStockUpdated) {
-				boolean isOrderUpdated = RobotFactoryUtils.writeToFile(RobotFactoryConstants.ORDER_FILE_LOCATION,
-						successfullOrders.toJSONString());
 
-				if (isOrderUpdated) {
-					return responseObject.toString();
+		}
+
+		JSONObject jsonObject = (JSONObject) orderObj;
+		if (!jsonObject.containsKey(RobotFactoryConstants.JSON_KEY_COMPONENTS)) {
+			String errorMessage = RobotFactoryExceptionHandler.getMessage(RobotFactoryErrorCodes.INVALID_ORDER_PAYLOAD,
+					"Invalid payload!. Sample payload is " + RobotFactoryConstants.getSampleOrderPayload().toString());
+			throw new InvalidOrderExcception(HttpStatus.BAD_REQUEST.value(), errorMessage);
+
+		}
+		Object componentsObject = jsonObject.get(RobotFactoryConstants.JSON_KEY_COMPONENTS);
+		if (!(componentsObject instanceof JSONArray)) {
+			String errorMessage = RobotFactoryExceptionHandler.getMessage(
+					RobotFactoryErrorCodes.INVALID_ORDER_COMPONENTS_ARRAY,
+					"Invalid payload!. \"components\" should be array. Sample payload is "
+							+ RobotFactoryConstants.getSampleOrderPayload().toString());
+			throw new InvalidOrderExcception(HttpStatus.BAD_REQUEST.value(), errorMessage);
+		}
+		JSONArray orderArray = (JSONArray) jsonObject.get(RobotFactoryConstants.JSON_KEY_COMPONENTS);
+
+		return orderArray;
+	}
+
+	@Override
+	public String purchase(String order)
+			throws PurchaseOrderException, FileOperationsException, InvalidOrderExcception {
+		boolean isValidOrder = isValidOrder(order);
+		if (isValidOrder) {
+			JSONArray components = getOrderItems(order);
+			boolean isStockUpdateSuccess = robotFactoryStock.updateStock(components);
+			if (isStockUpdateSuccess) {
+				JSONObject isOrderUpdated = updateOrderInRepository(order);
+
+				if (isOrderUpdated!=null) {
+					return isOrderUpdated.toString();
 				} else {
 					String errorMessage = RobotFactoryExceptionHandler.getMessage(
 							RobotFactoryErrorCodes.ORDER_FILEUPDATE_EXCEPTION,
@@ -135,9 +120,10 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 					"Invald Order. Please make sure only one of every mandatory items are added in your order");
 			throw new PurchaseOrderException(HttpStatus.UNPROCESSABLE_ENTITY.value(), erroMessage);
 		}
+
 	}
 
-	public static boolean validateOrder(Order order) throws PurchaseOrderException, FileOperationsException {
+	private boolean isOrderPlacable(Order order) throws PurchaseOrderException, FileOperationsException {
 
 		JSONArray orderArray = order.getComponents();
 		// To remove duplicate orders
@@ -158,7 +144,7 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 				String code = object.toString();
 
 				if (itemsMap.containsKey(code.toUpperCase())) {
-					JSONObject item = (JSONObject) itemsMap.get(code.toUpperCase());
+					JSONObject item = itemsMap.get(code.toUpperCase());
 					long quantity = (long) item.get(RobotFactoryConstants.JSON_KEY_QUANTITY);
 					if (quantity > 0) {
 						orderItemsCount--;
@@ -179,18 +165,17 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 		return false;
 	}
 
-	private double caculateOrderAmount(Order order) throws FileOperationsException {
+	private double caculateOrderAmount(Order userOrder) throws FileOperationsException {
 		double orderAmount = 0;
 		JSONObject currentStockItems = currentStock.getStockList();
 		Map<String, Map<String, JSONObject>> itemsInStockMap = new HashMap();
 		itemsInStockMap = currentStock.getItemsInStock(currentStockItems, false);
-		JSONArray orderArray = order.getComponents();
-		for (Object item : orderArray) {
+		for (Object item : userOrder.getComponents()) {
 			String orderItemCode = item.toString();
 			for (String itemKey : itemsInStockMap.keySet()) {
 				Map<String, JSONObject> itemsMap = itemsInStockMap.get(itemKey);
 				if (itemsMap.containsKey(orderItemCode)) {
-					JSONObject itemObject = (JSONObject) itemsMap.get(orderItemCode);
+					JSONObject itemObject = itemsMap.get(orderItemCode);
 					double price = (double) itemObject.get(RobotFactoryConstants.JSON_KEY_PRICE);
 					orderAmount += price;
 					break;
@@ -201,25 +186,57 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 	}
 
 	public JSONObject getOrderDetails(String orderId) throws FileOperationsException, InvalidOrderExcception {
-		if(orderId.matches("[0-9]")) {
-			
-		Order userOrder = new Order();
-		JSONObject orderObject = userOrder.getSuccessOrderList();
-		if (!orderObject.isEmpty()) {
-		
-		JSONArray orderArray = (JSONArray)orderObject.get(RobotFactoryConstants.JSON_KEY_ITEMS); 
-		for (Object object : orderArray) {
-			JSONObject item = (JSONObject) object;
-			if((long)item.get(RobotFactoryConstants.JSON_KEY_ORDER_ID) == Long.parseLong(orderId)) {
-			 return item;	
+		if (orderId.matches("[0-9]")) {
+			JSONObject orderObject = userOrder.getSuccessOrderList();
+			if (!orderObject.isEmpty()) {
+
+				JSONArray orderArray = (JSONArray) orderObject.get(RobotFactoryConstants.JSON_KEY_ITEMS);
+				for (Object object : orderArray) {
+					JSONObject item = (JSONObject) object;
+					if ((long) item.get(RobotFactoryConstants.JSON_KEY_ORDER_ID) == Long.parseLong(orderId)) {
+						return item;
+					}
+				}
 			}
+
 		}
+		String errorMessage = RobotFactoryExceptionHandler.getMessage(RobotFactoryErrorCodes.NO_ORDER_MATCHING_ORDER_ID,
+				"No orders matching " + orderId + " is found");
+		throw new InvalidOrderExcception(HttpStatus.BAD_REQUEST.value(), errorMessage);
+
+	}
+
+	public JSONObject updateOrderInRepository(String order) throws FileOperationsException {
+		double totalAmount = caculateOrderAmount(userOrder);
+		JSONObject responseObject = new JSONObject();
+		JSONObject successfullOrders = userOrder.getSuccessOrderList();
+		JSONArray savedOrders = new JSONArray();
+		long lastOrderId = RobotFactoryConstants.FIRST_ORDER_ID;
+		if (successfullOrders.containsKey(RobotFactoryConstants.JSON_KEY_ITEMS)) {
+			savedOrders = (JSONArray) successfullOrders.get(RobotFactoryConstants.JSON_KEY_ITEMS);
+			lastOrderId = userOrder.getMaxOrderId(savedOrders);
+		}
+		responseObject.put(RobotFactoryConstants.JSON_KEY_ORDER_ID, ++lastOrderId);
+		responseObject.put(RobotFactoryConstants.JSON_KEY_TOTAL, Math.round(totalAmount * 100) / 100.0d);
+		savedOrders.add(responseObject);
+		successfullOrders.put(RobotFactoryConstants.JSON_KEY_ITEMS, savedOrders);
+		
+		if(!RobotFactoryUtils.writeToFile(Order.getOrderFileLocation(), successfullOrders.toJSONString()))
+		{
+			return null;
 		}
 		
+	return responseObject;
+	}
+
+	public long getNewOrderId() throws FileOperationsException {
+		JSONObject successfullOrders = userOrder.getSuccessOrderList();
+		JSONArray savedOrders = new JSONArray();
+		long lastOrderId = RobotFactoryConstants.FIRST_ORDER_ID;
+		if (successfullOrders.containsKey(RobotFactoryConstants.JSON_KEY_ITEMS)) {
+			savedOrders = (JSONArray) successfullOrders.get(RobotFactoryConstants.JSON_KEY_ITEMS);
+			lastOrderId = userOrder.getMaxOrderId(savedOrders);
 		}
-		String errorMessage = RobotFactoryExceptionHandler.getMessage(
-				RobotFactoryErrorCodes.NO_ORDER_MATCHING_ORDER_ID, "No orders matching " + orderId + " is found");
-		throw new InvalidOrderExcception(HttpStatus.BAD_REQUEST.value(),errorMessage);
-	
+		return ++lastOrderId;
 	}
 }

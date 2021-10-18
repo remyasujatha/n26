@@ -16,9 +16,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpHeaders;
@@ -26,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -39,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
+@TestPropertySource(locations = "classpath:test.properties")
 class RobotFactoryServicesApplicationTests {
 
 	@LocalServerPort
@@ -50,120 +54,98 @@ class RobotFactoryServicesApplicationTests {
 	@Autowired
 	private MockMvc mockMvc;
 
+	@Value("${path.stock.fileName}")
+	private String stockFileLocation;
 
-	
+	@Value("${path.order.fileName}")
+	private String orderFileLocation;
+
 	@Test
 	void contextLoads() {
 
 	}
-	
+
+	@AfterEach
+	@BeforeEach
+	public void cleanUpFiles() {
+		File targetFile = new File(stockFileLocation);
+		targetFile.delete();
+		targetFile = new File(orderFileLocation);
+		targetFile.delete();
+	}
+
 	// TODO Call common method, emptyOrderRequest in every test
-	//	
+	//
 	/**
-	 * Payload :  {"components": ["A","I","D","F"]}
+	 * Payload : {"components": ["A","I","D","F"]}
+	 * 
+	 * @throws Exception
 	 */
 	@Test
-	public void shouldOrderARobot() {
-				try {
-//					 String fileName = "stock.json";
-//					    MockMultipartFile sampleFile = new MockMultipartFile(
-//					      "uploaded-file",
-//					      fileName, 
-//					      "application/json",
-//					      "This is the file content".getBytes()
-//					    );
-//					    File initialStockFile = ResourceUtils.getFile(RobotFactoryConstants.INITIAL_STOCK_FILE_LOCATION);
-//						try (OutputStream os = Files.newOutputStream(sampleFile.toPath())) {
-//							Files.copy(initialStockFile.toPath(), os);
-//						}
-//					    MockMultipartHttpServletRequestBuilder multipartRequest =
-//					      MockMvcRequestBuilders.multipart("/api/files/upload");
+	public void shouldOrderARobot() throws Exception {
 
-					
-			mockMvc.perform(post("/orders").content("{\"components\": [\"A\",\"I\",\"D\",\"F\"] }")
-					.accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON))
-					.andExpect(status().isCreated()).andExpect(jsonPath("$.total").value(160.11))
-					.andExpect(jsonPath("$.order_id").isNumber());
-		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
-			System.out.println(e.getCause());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		ResultActions actions = performTest("/orders", "{\"components\": [\"A\",\"I\",\"D\",\"F\"] }", "POST");
+		actions.andExpect(status().isCreated()).andExpect(jsonPath("$.total").value(160.11));
+		actions.andExpect(jsonPath("$.order_id").isNumber());
 	}
 
 	/**
-	 * Payload :  {}
+	 * Payload : {}
+	 * 
+	 * @throws Exception
 	 */
 	@Test
-	public void failToMissingComponentsPayload() {
-		try {
-			mockMvc.perform(post("/orders").content("{}")).andExpect(status().isBadRequest());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public void failToMissingComponentsPayload() throws Exception {
+		ResultActions actions = performTest("/orders", "{}", "POST");
+		actions.andExpect(status().isBadRequest());
 	}
 
 	/**
-	 * Payload :  ["components": ["A","I","D","G"]]
+	 * Payload : ["components": ["A","I","D","G"]]
+	 * 
+	 * @throws Exception
 	 */
 	@Test
-	public void failToInvalidJSONStructureInOrderPayload() {
-		try {
-			mockMvc.perform(post("/orders").content("[\"components\" : [\"A\",\"I\",\"D\",\"G\"]]"))
-					.andExpect(status().isBadRequest());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public void failToInvalidJSONStructureInOrderPayload() throws Exception {
+		ResultActions actions = performTest("/orders", "[\"components\" : [\"A\",\"I\",\"D\",\"G\"]]", "POST");
+		actions.andExpect(status().isBadRequest());
 	}
 
 	/**
-	 * Payload :  {"components": "A"}
+	 * Payload : {"components": "A"}
+	 * 
+	 * @throws Exception
 	 */
 	@Test
-	public void failToInvalidComponentsInPayload() {
-		try {
-			mockMvc.perform(post("/orders").content("{\"components\":\"A\"}")).andExpect(status().isBadRequest());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public void failToInvalidComponentsInPayload() throws Exception {
+		ResultActions actions = performTest("/orders", "{\"components\":\"A\"}", "POST");
+		actions.andExpect(status().isBadRequest());
 	}
 
 	/**
-	 * Payload :  {"components": ["A", "A","D","G"]}
+	 * Payload : {"components": ["A", "A","D","G"]}
+	 * 
+	 * @throws Exception
 	 */
 	@Test
-	public void failToOrderDuplicateMandatoryItems() {
-		try {
-			mockMvc.perform(post("/orders").content("{\"components\": [\"A\",\"A\",\"D\",\"G\"]}"))
-					.andExpect(status().isUnprocessableEntity());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public void failToOrderDuplicateMandatoryItems() throws Exception {
+		ResultActions actions = performTest("/orders", "{\"components\": [\"A\",\"A\",\"D\",\"G\"]}", "POST");
+		actions.andExpect(status().isUnprocessableEntity());
 	}
 
 	/**
-	 * Payload :  {"components": ["C","I","D","G"]}
-	 * with C out of stock
+	 * Payload : {"components": ["C","I","D","G"]} with C out of stock
+	 * 
+	 * @throws Exception
 	 */
 	@Test
-	public void failToOrderOutOfStockItem() {
-		try {
-			mockMvc.perform(post("/orders").content("{\"components\": [\"C\",\"I\",\"D\",\"G\"]}"))
-					.andExpect(status().isForbidden());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public void failToOrderOutOfStockItem() throws Exception {
+		ResultActions actions = performTest("/orders", "{\"components\": [\"C\",\"I\",\"D\",\"G\"]}", "POST");
+		actions.andExpect(status().isForbidden());
 	}
 
 	/**
-	 * Empty Payload :  
+	 * Empty Payload :
 	 */
 	@Test
 	public void failToEmptyOrderRequest() throws Exception {
@@ -172,7 +154,7 @@ class RobotFactoryServicesApplicationTests {
 	}
 
 	/**
-	 * Special characters in Payload :  @#$@#%
+	 * Special characters in Payload : @#$@#%
 	 */
 	@Test
 	public void failToOrderWithSpecialCharactersRequest() throws Exception {
@@ -181,7 +163,7 @@ class RobotFactoryServicesApplicationTests {
 	}
 
 	/**
-	 * null Payload :  null
+	 * null Payload : null
 	 */
 	@Test
 	public void failNullOrder() throws Exception {
@@ -190,27 +172,30 @@ class RobotFactoryServicesApplicationTests {
 	}
 
 	/**
-	 * Payload :  {"components": ["C","C","I","D","G"]}
-	 * with C out of stock
-	 * @throws Exception 
+	 * Payload : {"components": ["C","C","I","D","G"]} with C out of stock
+	 * 
+	 * @throws Exception
 	 */
 	@Test
 	public void failToOrderMultipleOutOfStockItem() throws Exception {
-			ResultActions actions = performTest("/orders","{\"components\": [\"C\",\"C\",\"D\",\"G\"]}","POST");
-			actions.andExpect(status().isUnprocessableEntity());
-			}
-	
+		ResultActions actions = performTest("/orders", "{\"components\": [\"C\",\"C\",\"D\",\"G\"]}", "POST");
+		actions.andExpect(status().isUnprocessableEntity());
+	}
+
 	/**
-	 * Payload :  {"components": ["a","I","D","G"]}
-	 * with C out of stock
-	 * @throws Exception 
+	 * Payload : {"components": ["a","I","D","G"]} with C out of stock
+	 * 
+	 * @throws Exception
 	 */
 	@Test
 	public void shouldOrderWithLowerCaseForCode() throws Exception {
-			ResultActions actions = performTest("/orders","{\"components\": [\"a\",\"I\",\"D\",\"G\"]}","POST");
-			actions.andExpect(status().isCreated());
-			}
-	
+		ResultActions actions = performTest("/orders", "{\"components\": [\"a\",\"I\",\"D\",\"G\"]}", "POST");
+		actions.andExpect(status().isCreated());
+		actions.andExpect(status().isCreated()).andExpect(jsonPath("$.total").value(174.19));
+		actions.andExpect(jsonPath("$.order_id").isNumber());
+	}
+
+
 	public ResultActions performTest(String url, String content, String requestMethod) {
 
 		ResultActions actions = null;

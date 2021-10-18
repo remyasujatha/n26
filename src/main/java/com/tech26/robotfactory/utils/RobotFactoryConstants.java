@@ -8,10 +8,8 @@ import org.json.simple.JSONObject;
 
 public final class RobotFactoryConstants {
 	
-	public static final String STOCK_FILE_LOCATION = "./stock.json";
 	public static final String INITIAL_STOCK_FILE_LOCATION = "classpath:stock.json";
 	public static final String STOCK_FILE = "stock.json";
-	public static final String ORDER_FILE_LOCATION = "./orders.json";
 	
 	public static final String JSON_KEY_ERROR_CODE = "errorCode";
 	public static final  String JSON_KEY_ERROR_MESSAGE = "errorMessage";
