@@ -50,8 +50,6 @@ class RobotFactoryServicesApplicationTests {
 	@Autowired
 	private MockMvc mockMvc;
 
-	@Rule
-    public TemporaryFolder folder = new TemporaryFolder();
 
 	
 	@Test
@@ -67,19 +65,19 @@ class RobotFactoryServicesApplicationTests {
 	@Test
 	public void shouldOrderARobot() {
 				try {
-					 String fileName = "stock.json";
-					    MockMultipartFile sampleFile = new MockMultipartFile(
-					      "uploaded-file",
-					      fileName, 
-					      "application/json",
-					      "This is the file content".getBytes()
-					    );
-					    File initialStockFile = ResourceUtils.getFile(RobotFactoryConstants.INITIAL_STOCK_FILE_LOCATION);
-						try (OutputStream os = Files.newOutputStream(sampleFile.toPath())) {
-							Files.copy(initialStockFile.toPath(), os);
-						}
-					    MockMultipartHttpServletRequestBuilder multipartRequest =
-					      MockMvcRequestBuilders.multipart("/api/files/upload");
+//					 String fileName = "stock.json";
+//					    MockMultipartFile sampleFile = new MockMultipartFile(
+//					      "uploaded-file",
+//					      fileName, 
+//					      "application/json",
+//					      "This is the file content".getBytes()
+//					    );
+//					    File initialStockFile = ResourceUtils.getFile(RobotFactoryConstants.INITIAL_STOCK_FILE_LOCATION);
+//						try (OutputStream os = Files.newOutputStream(sampleFile.toPath())) {
+//							Files.copy(initialStockFile.toPath(), os);
+//						}
+//					    MockMultipartHttpServletRequestBuilder multipartRequest =
+//					      MockMvcRequestBuilders.multipart("/api/files/upload");
 
 					
 			mockMvc.perform(post("/orders").content("{\"components\": [\"A\",\"I\",\"D\",\"F\"] }")
