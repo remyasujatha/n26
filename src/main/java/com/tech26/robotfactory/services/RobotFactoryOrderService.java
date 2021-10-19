@@ -48,7 +48,7 @@ public interface RobotFactoryOrderService {
 	 * @return
 	 * @throws FileOperationsException
 	 */
-	public JSONObject updateOrderInRepository(String order) throws FileOperationsException;
+	public JSONObject updateOrderInRepository() throws FileOperationsException;
 	
 
 }

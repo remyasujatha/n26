@@ -27,11 +27,11 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 	public static RobotFactoryStockImpl robotFactoryStock;
 	public static Stock currentStock;
 	public static Order userOrder;
-	
+
 	private RobotFactoryOrderImpl() {
 		currentStock = Stock.getInstance();
 		robotFactoryStock = RobotFactoryStockImpl.getInstance();
-		
+
 		userOrder = Order.getInstance();
 	}
 
@@ -47,9 +47,8 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 	@Override
 	public boolean isValidOrder(String order)
 			throws PurchaseOrderException, FileOperationsException, InvalidOrderExcception {
-		JSONArray orderItems = getOrderItems(order);
-		userOrder.setComponents(orderItems);
-		return isOrderPlacable(userOrder);
+		userOrder.setComponents(getOrderItems(order));
+		return isOrderPlacable();
 	}
 
 	private JSONArray getOrderItems(String order) throws InvalidOrderExcception {
@@ -94,14 +93,10 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 	@Override
 	public String purchase(String order)
 			throws PurchaseOrderException, FileOperationsException, InvalidOrderExcception {
-		boolean isValidOrder = isValidOrder(order);
-		if (isValidOrder) {
-			JSONArray components = getOrderItems(order);
-			boolean isStockUpdateSuccess = robotFactoryStock.updateStock(components);
-			if (isStockUpdateSuccess) {
+		if (isValidOrder(order)) {
+			if (robotFactoryStock.updateStock(userOrder.getComponents())) {
 				JSONObject isOrderUpdated = updateOrderInRepository(order);
-
-				if (isOrderUpdated!=null) {
+				if (isOrderUpdated != null) {
 					return isOrderUpdated.toString();
 				} else {
 					String errorMessage = RobotFactoryExceptionHandler.getMessage(
@@ -123,9 +118,9 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 
 	}
 
-	private boolean isOrderPlacable(Order order) throws PurchaseOrderException, FileOperationsException {
+	private boolean isOrderPlacable() throws PurchaseOrderException, FileOperationsException {
 
-		JSONArray orderArray = order.getComponents();
+		JSONArray orderArray = userOrder.getComponents();
 		// To remove duplicate orders
 		Set<String> orderSet = (Set<String>) orderArray.stream().map(s -> s.toString().toUpperCase())
 				.collect(Collectors.toSet());
@@ -165,7 +160,7 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 		return false;
 	}
 
-	private double caculateOrderAmount(Order userOrder) throws FileOperationsException {
+	private double caculateOrderAmount() throws FileOperationsException {
 		double orderAmount = 0;
 		JSONObject currentStockItems = currentStock.getStockList();
 		Map<String, Map<String, JSONObject>> itemsInStockMap = new HashMap();
@@ -206,8 +201,8 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 
 	}
 
-	public JSONObject updateOrderInRepository(String order) throws FileOperationsException {
-		double totalAmount = caculateOrderAmount(userOrder);
+	public JSONObject updateOrderInRepository() throws FileOperationsException {
+		double totalAmount = caculateOrderAmount();
 		JSONObject responseObject = new JSONObject();
 		JSONObject successfullOrders = userOrder.getSuccessOrderList();
 		JSONArray savedOrders = new JSONArray();
@@ -220,13 +215,12 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 		responseObject.put(RobotFactoryConstants.JSON_KEY_TOTAL, Math.round(totalAmount * 100) / 100.0d);
 		savedOrders.add(responseObject);
 		successfullOrders.put(RobotFactoryConstants.JSON_KEY_ITEMS, savedOrders);
-		
-		if(!RobotFactoryUtils.writeToFile(Order.getOrderFileLocation(), successfullOrders.toJSONString()))
-		{
+
+		if (!RobotFactoryUtils.writeToFile(Order.getOrderFileLocation(), successfullOrders.toJSONString())) {
 			return null;
 		}
-		
-	return responseObject;
+
+		return responseObject;
 	}
 
 	public long getNewOrderId() throws FileOperationsException {
