@@ -27,6 +27,7 @@
 		</dependency>
 
 		<dependency>
+		<!-- for every change  app is automatically restarted -->
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 			<scope>runtime</scope>

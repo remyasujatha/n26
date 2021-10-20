@@ -95,7 +95,7 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 			throws PurchaseOrderException, FileOperationsException, InvalidOrderExcception {
 		if (isValidOrder(order)) {
 			if (robotFactoryStock.updateStock(userOrder.getComponents())) {
-				JSONObject isOrderUpdated = updateOrderInRepository(order);
+				JSONObject isOrderUpdated = updateOrderInRepository();
 				if (isOrderUpdated != null) {
 					return isOrderUpdated.toString();
 				} else {

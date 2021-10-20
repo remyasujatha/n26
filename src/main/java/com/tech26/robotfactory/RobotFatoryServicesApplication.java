@@ -12,15 +12,8 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
  * Application to Order configurable Robots
  */
 @SpringBootApplication
-public class RobotFatoryServicesApplication extends SpringBootServletInitializer{
-
+public class RobotFatoryServicesApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(RobotFatoryServicesApplication.class, args);
 	}
-
-
-	  @Override
-	  protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
-	      return builder.sources(RobotFatoryServicesApplication.class);
-	  }
 }
