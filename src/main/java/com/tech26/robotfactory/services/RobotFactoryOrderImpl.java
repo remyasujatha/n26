@@ -212,7 +212,7 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 		savedOrders.add(responseObject);
 		successfullOrders.put(RobotFactoryConstants.JSON_KEY_ITEMS, savedOrders);
 
-		if (!RobotFactoryUtils.writeToFile(Order.getOrderFileLocation(), successfullOrders.toJSONString())) {
+		if (!RobotFactoryUtils.writeToFile(userOrder.getOrderFileLocation(), successfullOrders.toJSONString())) {
 			return null;
 		}
 

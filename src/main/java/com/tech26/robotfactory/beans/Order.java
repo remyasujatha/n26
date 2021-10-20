@@ -41,7 +41,14 @@ public class Order {
 	private long orderID;
 	private double total;
 
-	private static String orderFileLocation;
+	private  String orderFileLocation;
+
+	/**
+	 * @return the orderFileLocation
+	 */
+	public String getOrderFileLocation() {
+		return orderFileLocation;
+	}
 
 	@Autowired
 	public Order(@Value("${path.order.fileName}") String orderFileLocation) {
@@ -82,11 +89,7 @@ public class Order {
 	public JSONArray getComponents() {
 		return components;
 	}
-
-	public static Order getInstance() {
-		return new Order(orderFileLocation);
-	}
-
+	
 	/**
 	 * @param order the order to set
 	 */
@@ -132,9 +135,5 @@ public class Order {
 		}
 		return maxValue;
 
-	}
-
-	public static String getOrderFileLocation() {
-		return orderFileLocation;
 	}
 }
