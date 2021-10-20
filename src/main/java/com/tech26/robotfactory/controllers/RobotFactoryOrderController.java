@@ -36,35 +36,31 @@ import com.tech26.robotfactory.services.RobotFactoryOrderImpl;
 /**
  * @author Remya
  * 
- * Controller for handling stocks
+ *         Controller for handling stocks
  *
  */
 @RestController
 public class RobotFactoryOrderController {
+	@Autowired
+	public RobotFactoryOrderImpl robotFactoryOrder;
 
-	public static RobotFactoryOrderImpl robotFactoryOrder;
-
-	public RobotFactoryOrderController() {
-		robotFactoryOrder = RobotFactoryOrderImpl.getInstance();
-	}
-	
 	@GetMapping("/orders/{orderId}")
-	public JSONObject getOrderDetails(@PathVariable(value = "orderId") String orderId, final HttpServletResponse response) throws IOException {
+	public JSONObject getOrderDetails(@PathVariable(value = "orderId") String orderId,
+			final HttpServletResponse response) throws IOException {
 		try {
 			return robotFactoryOrder.getOrderDetails(orderId);
 		} catch (FileOperationsException e) {
 			response.sendError(e.getCode(), e.getMessage());
 		} catch (InvalidOrderExcception e) {
 			response.sendError(e.getCode(), e.getMessage());
-		} 
+		}
 		return null;
 	}
 
 	@PostMapping("/orders")
 	@ResponseStatus(HttpStatus.CREATED)
-	public String purchaseRobot(final HttpServletResponse response, @RequestBody String order)
-			throws IOException {
-		String orderMessage = null;
+	public JSONObject purchaseRobot(final HttpServletResponse response, @RequestBody String order) throws IOException {
+		JSONObject orderMessage = null;
 		try {
 			orderMessage = robotFactoryOrder.purchase(order);
 		} catch (PurchaseOrderException e) {

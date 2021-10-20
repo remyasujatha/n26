@@ -30,13 +30,9 @@ import com.tech26.robotfactory.services.RobotFactoryStockImpl;
 @RestController
 public class RobotFactoryStockController {
 	
-	public static RobotFactoryStockImpl robotFactoryStock;
-
+	@Autowired
+	public RobotFactoryStockImpl robotFactoryStock;
 	
-	public RobotFactoryStockController() {
-		robotFactoryStock = RobotFactoryStockImpl.getInstance();
-	}
-
 	@GetMapping("/stocks")
 	public JSONObject getStockList() throws FileOperationsException {
 		return robotFactoryStock.getStock();

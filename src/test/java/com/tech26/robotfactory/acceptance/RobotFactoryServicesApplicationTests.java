@@ -1,44 +1,25 @@
 package com.tech26.robotfactory.acceptance;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.notNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-import org.springframework.util.ResourceUtils;
-
-import com.tech26.robotfactory.utils.RobotFactoryConstants;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -47,9 +28,6 @@ class RobotFactoryServicesApplicationTests {
 
 	@LocalServerPort
 	private int port;
-
-	@Autowired
-	private TestRestTemplate restTemplate;
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -74,11 +52,9 @@ class RobotFactoryServicesApplicationTests {
 		targetFile.delete();
 	}
 
-	// TODO Call common method, emptyOrderRequest in every test
-	//
 	/**
 	 * Payload : {"components": ["A","I","D","F"]}
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -91,7 +67,7 @@ class RobotFactoryServicesApplicationTests {
 
 	/**
 	 * Payload : {}
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -102,7 +78,7 @@ class RobotFactoryServicesApplicationTests {
 
 	/**
 	 * Payload : ["components": ["A","I","D","G"]]
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -113,7 +89,7 @@ class RobotFactoryServicesApplicationTests {
 
 	/**
 	 * Payload : {"components": "A"}
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -124,7 +100,7 @@ class RobotFactoryServicesApplicationTests {
 
 	/**
 	 * Payload : {"components": ["A", "A","D","G"]}
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -135,7 +111,7 @@ class RobotFactoryServicesApplicationTests {
 
 	/**
 	 * Payload : {"components": ["C","I","D","G"]} with C out of stock
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -173,7 +149,7 @@ class RobotFactoryServicesApplicationTests {
 
 	/**
 	 * Payload : {"components": ["C","C","I","D","G"]} with C out of stock
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -184,7 +160,7 @@ class RobotFactoryServicesApplicationTests {
 
 	/**
 	 * Payload : {"components": ["a","I","D","G"]} with C out of stock
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test

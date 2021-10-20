@@ -2,6 +2,8 @@ package com.tech26.robotfactory.services;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.tech26.robotfactory.Exceptions.FileOperationsException;
 import com.tech26.robotfactory.beans.Stock;
@@ -12,35 +14,23 @@ import com.tech26.robotfactory.utils.RobotFactoryUtils;
  * @author Remya
  *
  */
-public class RobotFactoryStockImpl implements RobotFactoryStockService{
-	
-	public static RobotFactoryStockImpl robotFactoryStock;
-	public static Stock currentStock;
+@Component
+public class RobotFactoryStockImpl implements RobotFactoryStockService {
 
-	private RobotFactoryStockImpl() {
-		currentStock = Stock.getInstance();
-	}
-	
-	public static RobotFactoryStockImpl getInstance() {
-		if(robotFactoryStock == null) {
-			synchronized (RobotFactoryStockImpl.class) {
-				robotFactoryStock = new RobotFactoryStockImpl();
-			}
-		}
-		return robotFactoryStock;
-	}
+//	public static RobotFactoryStockImpl robotFactoryStock;
+
+	@Autowired
+	public Stock currentStock;
+
 	@Override
 	public JSONObject getStock() throws FileOperationsException {
-		if (currentStock == null) {
-			currentStock = Stock.getInstance();
-		}
-		return currentStock.getStockList();
+		return currentStock.getStockListInRepo();
 
 	}
-	
+
 	@Override
 	public boolean updateStock(JSONArray userOrderArray) throws FileOperationsException {
-		JSONObject currentStockList = currentStock.getStockList();
+		JSONObject currentStockList = currentStock.getStockListInRepo();
 		JSONArray currentStockItems = (JSONArray) currentStockList.get(RobotFactoryConstants.JSON_KEY_ITEMS);
 		userOrderArray.stream().forEachOrdered((itemCode) -> {
 			for (int index = 0; index < currentStockItems.size(); index++) {
@@ -61,6 +51,5 @@ public class RobotFactoryStockImpl implements RobotFactoryStockService{
 		return RobotFactoryUtils.writeToFile(RobotFactoryConstants.STOCK_FILE, currentStockList.toString());
 
 	}
-
 
 }

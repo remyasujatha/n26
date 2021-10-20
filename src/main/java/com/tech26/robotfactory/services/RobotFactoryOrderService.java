@@ -41,7 +41,7 @@ public interface RobotFactoryOrderService {
 	 * @throws FileOperationsException
 	 * @throws InvalidOrderExcception
 	 */
-	public String purchase(String order) throws PurchaseOrderException, FileOperationsException, InvalidOrderExcception;
+	public JSONObject purchase(String order) throws PurchaseOrderException, FileOperationsException, InvalidOrderExcception;
 	
 	/** If purchase is placed successfully, the order is updated to repo
 	 * @param order placed by user

@@ -32,34 +32,22 @@ import com.tech26.robotfactory.utils.RobotFactoryExceptionHandler;
 /**
  * @author Remya
  *
- * Stock entity to store Stock details
+ *         Stock entity to store Stock details
  */
 @Component
 public class Stock {
 
-	private static Stock stockInstance;
-	private static String stockFileLocation;
+	private String stockFileLocation;
 
-	
 	@Autowired
 	private Stock(@Value("${path.stock.fileName}") String stockFileLocation) {
 		this.stockFileLocation = stockFileLocation;
 	}
 
-	public static Stock getInstance() {
-
-		if (stockInstance == null) {
-			synchronized (Stock.class) {
-				stockInstance = new Stock(stockFileLocation);
-			}
-		}
-		return stockInstance;
-	}
-	
 	/**
-	 * Returns current stock list 
-	 * */
-	public synchronized JSONObject getStockList() throws FileOperationsException {
+	 * Returns current stock list
+	 */
+	public synchronized JSONObject getStockListInRepo() throws FileOperationsException {
 		File stockFile = null;
 		try {
 			stockFile = new File(stockFileLocation);
@@ -94,7 +82,6 @@ public class Stock {
 		for (Object item : itemsArray) {
 			JSONObject itemObject = (JSONObject) item;
 			String itemName = itemObject.get(RobotFactoryConstants.JSON_KEY_ID).toString();
-			int count = 0;
 			boolean isItemMandatory = (boolean) itemObject.get(RobotFactoryConstants.JSON_KEY_MANDATORY);
 			JSONArray listItems = (JSONArray) itemObject.get(RobotFactoryConstants.JSON_KEY_LIST);
 			Map<String, JSONObject> listItemsMap;
@@ -127,7 +114,5 @@ public class Stock {
 
 		return stockItemsMap;
 	}
-
-
 
 }

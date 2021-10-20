@@ -9,8 +9,10 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import com.tech26.robotfactory.Exceptions.FileOperationsException;
 import com.tech26.robotfactory.Exceptions.InvalidOrderExcception;
@@ -22,27 +24,16 @@ import com.tech26.robotfactory.utils.RobotFactoryErrorCodes;
 import com.tech26.robotfactory.utils.RobotFactoryExceptionHandler;
 import com.tech26.robotfactory.utils.RobotFactoryUtils;
 
+@Component
 public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
-	public static RobotFactoryOrderImpl robotFactoryOrder;
-	public static RobotFactoryStockImpl robotFactoryStock;
-	public static Stock currentStock;
-	public static Order userOrder;
-
-	private RobotFactoryOrderImpl() {
-		currentStock = Stock.getInstance();
-		robotFactoryStock = RobotFactoryStockImpl.getInstance();
-
-		userOrder = Order.getInstance();
-	}
-
-	public static RobotFactoryOrderImpl getInstance() {
-		if (robotFactoryOrder == null) {
-			synchronized (RobotFactoryOrderImpl.class) {
-				robotFactoryOrder = new RobotFactoryOrderImpl();
-			}
-		}
-		return robotFactoryOrder;
-	}
+	
+	@Autowired
+	public  RobotFactoryStockImpl robotFactoryStock;
+	@Autowired
+	public Stock currentStock;
+	
+	@Autowired
+	public Order userOrder;
 
 	@Override
 	public boolean isValidOrder(String order)
@@ -91,13 +82,13 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 	}
 
 	@Override
-	public String purchase(String order)
+	public JSONObject purchase(String order)
 			throws PurchaseOrderException, FileOperationsException, InvalidOrderExcception {
 		if (isValidOrder(order)) {
 			if (robotFactoryStock.updateStock(userOrder.getComponents())) {
 				JSONObject isOrderUpdated = updateOrderInRepository();
 				if (isOrderUpdated != null) {
-					return isOrderUpdated.toString();
+					return isOrderUpdated;
 				} else {
 					String errorMessage = RobotFactoryExceptionHandler.getMessage(
 							RobotFactoryErrorCodes.ORDER_FILEUPDATE_EXCEPTION,
@@ -125,9 +116,7 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 		Set<String> orderSet = (Set<String>) orderArray.stream().map(s -> s.toString().toUpperCase())
 				.collect(Collectors.toSet());
 
-		JSONObject currentStockItems = currentStock.getStockList();
-		Map<String, Map<String, JSONObject>> mandatoryItemsInStock = new HashMap();
-		mandatoryItemsInStock = currentStock.getItemsInStock(currentStockItems, true);
+		Map<String, Map<String, JSONObject>> mandatoryItemsInStock = getCurrentStockList(true);
 		int mandatoryItemsCount = mandatoryItemsInStock.size();
 		if ((orderSet.size() != mandatoryItemsCount) || (orderSet.size() != orderArray.size())) {
 			return false;
@@ -160,11 +149,18 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 		return false;
 	}
 
+	private Map<String, Map<String, JSONObject>> getCurrentStockList(boolean isMandatory)
+			throws FileOperationsException {
+		JSONObject currentStockItems = currentStock.getStockListInRepo();
+		Map<String, Map<String, JSONObject>> itemsInStockMap = new HashMap<>();
+		itemsInStockMap = currentStock.getItemsInStock(currentStockItems, isMandatory);
+		return itemsInStockMap;
+
+	}
+
 	private double caculateOrderAmount() throws FileOperationsException {
 		double orderAmount = 0;
-		JSONObject currentStockItems = currentStock.getStockList();
-		Map<String, Map<String, JSONObject>> itemsInStockMap = new HashMap();
-		itemsInStockMap = currentStock.getItemsInStock(currentStockItems, false);
+		Map<String, Map<String, JSONObject>> itemsInStockMap = getCurrentStockList(false);
 		for (Object item : userOrder.getComponents()) {
 			String orderItemCode = item.toString();
 			for (String itemKey : itemsInStockMap.keySet()) {
