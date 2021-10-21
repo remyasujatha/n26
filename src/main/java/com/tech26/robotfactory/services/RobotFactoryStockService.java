@@ -1,5 +1,7 @@
 package com.tech26.robotfactory.services;
 
+import java.util.List;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Service;
@@ -19,7 +21,7 @@ public interface RobotFactoryStockService {
 	 * @return
 	 * @throws FileOperationsException
 	 */
-	public boolean updateStock(JSONArray userOrderArray) throws FileOperationsException;
+	public boolean updateStock(List<String> userOrderArray) throws FileOperationsException;
 	
 	/** gets the current stock list
 	 * @return

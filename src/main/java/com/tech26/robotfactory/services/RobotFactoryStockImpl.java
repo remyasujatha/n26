@@ -1,5 +1,7 @@
 package com.tech26.robotfactory.services;
 
+import java.util.List;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +31,10 @@ public class RobotFactoryStockImpl implements RobotFactoryStockService {
 	}
 
 	@Override
-	public boolean updateStock(JSONArray userOrderArray) throws FileOperationsException {
+	public boolean updateStock(List<String> userOrderList) throws FileOperationsException {
 		JSONObject currentStockList = currentStock.getStockListInRepo();
 		JSONArray currentStockItems = (JSONArray) currentStockList.get(RobotFactoryConstants.JSON_KEY_ITEMS);
-		userOrderArray.stream().forEachOrdered((itemCode) -> {
+		userOrderList.stream().forEachOrdered((itemCode) -> {
 			for (int index = 0; index < currentStockItems.size(); index++) {
 				JSONObject category = (JSONObject) currentStockItems.get(index);
 				JSONArray items = (JSONArray) category.get(RobotFactoryConstants.JSON_KEY_LIST);

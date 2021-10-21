@@ -37,7 +37,7 @@ import com.tech26.robotfactory.utils.RobotFactoryExceptionHandler;
 @Component
 public class Order {
 
-	private JSONArray components;
+	private List<String> components;
 	private long orderID;
 	private double total;
 
@@ -86,7 +86,7 @@ public class Order {
 	/**
 	 * @return the order
 	 */
-	public JSONArray getComponents() {
+	public List<String> getComponents() {
 		return components;
 	}
 	

@@ -1,9 +1,13 @@
 package com.tech26.robotfactory.services;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -111,14 +115,12 @@ public class RobotFactoryOrderImpl implements RobotFactoryOrderService {
 
 	private boolean isOrderPlacable() throws PurchaseOrderException, FileOperationsException {
 
-		JSONArray orderArray = userOrder.getComponents();
+		List<String> orderArray = userOrder.getComponents();
 		// To remove duplicate orders
-		Set<String> orderSet = (Set<String>) orderArray.stream().map(s -> s.toString().toUpperCase())
-				.collect(Collectors.toSet());
-
+		orderArray = orderArray.stream().map(a->a.toLowerCase()).distinct().collect(Collectors.toList());
 		Map<String, Map<String, JSONObject>> mandatoryItemsInStock = getCurrentStockList(true);
 		int mandatoryItemsCount = mandatoryItemsInStock.size();
-		if ((orderSet.size() != mandatoryItemsCount) || (orderSet.size() != orderArray.size())) {
+		if ((orderArray.size() != mandatoryItemsCount) || (orderArray.size() != orderArray.size())) {
 			return false;
 		}
 		int orderItemsCount = orderArray.size();
